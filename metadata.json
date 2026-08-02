@@ -1,0 +1,6 @@
+{
+  "name": "FZ Savings",
+  "description": "Aplikasi Manajemen Keuangan & Tabungan Android Modern (Jetpack Compose, MVVM, Clean Architecture)",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

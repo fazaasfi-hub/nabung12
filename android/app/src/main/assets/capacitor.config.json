@@ -1,0 +1,8 @@
+{
+	"appId": "com.fzsavings.app",
+	"appName": "FZ Savings",
+	"webDir": "dist",
+	"server": {
+		"androidScheme": "https"
+	}
+}

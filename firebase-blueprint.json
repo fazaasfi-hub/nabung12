@@ -1,0 +1,36 @@
+{
+  "entities": {
+    "users": {
+      "title": "users",
+      "description": "Authenticated user profile documents",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "pin": { "type": "string" },
+        "isBiometricsEnabled": { "type": "boolean" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["uid", "email"]
+    },
+    "transactions": {
+      "title": "transactions",
+      "description": "User specific financial transaction logs",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "amount": { "type": "number" },
+        "type": { "type": "string" },
+        "categoryId": { "type": "string" },
+        "accountId": { "type": "string" },
+        "date": { "type": "string" },
+        "time": { "type": "string" },
+        "notes": { "type": "string" }
+      },
+      "required": ["userId", "amount", "type"]
+    }
+  }
+}
