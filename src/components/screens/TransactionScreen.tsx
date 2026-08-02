@@ -99,6 +99,7 @@ export const TransactionScreen: React.FC<TransactionScreenProps> = ({
       accountId: selectedAccount,
       targetAccountId: txType === 'TRANSFER' ? targetAccount : undefined,
       date: todayStr,
+      time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
       notes: notes.trim(),
       isDeleted: false
     };
