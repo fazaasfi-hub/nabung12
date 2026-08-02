@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { UserProfile, AppSettings } from '../../types';
-import { User, Shield, Lock, Smartphone, Moon, Sun, Globe, Download, Database, RefreshCw, Sparkles, ChevronRight, Check, Camera, Edit2, Upload, X, Image as ImageIcon } from 'lucide-react';
+import { User, Shield, Lock, Smartphone, Moon, Sun, Globe, Download, Database, RefreshCw, Sparkles, ChevronRight, Check, Camera, Edit2, Upload, X, Languages, Image as ImageIcon } from 'lucide-react';
+import { getTranslation } from '../../utils/translations';
 
 interface SettingsProfileScreenProps {
   userProfile: UserProfile;
@@ -25,6 +26,7 @@ export const SettingsProfileScreen: React.FC<SettingsProfileScreenProps> = ({
   onResetData,
   onLogout
 }) => {
+  const t = getTranslation(settings.language);
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState(userProfile.name);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
@@ -37,7 +39,7 @@ export const SettingsProfileScreen: React.FC<SettingsProfileScreenProps> = ({
       name: tempName.trim()
     });
     setIsEditingName(false);
-    setToastMsg('Username berhasil diperbarui!');
+    setToastMsg(settings.language === 'ID' ? 'Username berhasil diperbarui!' : 'Username updated successfully!');
     setTimeout(() => setToastMsg(null), 3000);
   };
 
@@ -103,8 +105,8 @@ export const SettingsProfileScreen: React.FC<SettingsProfileScreenProps> = ({
 
       {/* Header */}
       <div>
-        <h2 className={`text-xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>Profil & Pengaturan</h2>
-        <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Personalisasi akun & keamanan biometrik</p>
+        <h2 className={`text-xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>{t.settingsTitle}</h2>
+        <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{t.settingsSubtitle}</p>
       </div>
 
       {/* Toast Notification */}
@@ -182,7 +184,7 @@ export const SettingsProfileScreen: React.FC<SettingsProfileScreenProps> = ({
                 </div>
                 <p className="text-xs text-indigo-200 truncate">{userProfile.email}</p>
                 <span className="inline-block px-2.5 py-0.5 mt-1 bg-white/10 text-[10px] font-bold rounded-full text-indigo-200">
-                  Anggota Sejak {userProfile.joinedDate}
+                  {t.joinedSince} {userProfile.joinedDate}
                 </span>
               </div>
             )}
@@ -196,7 +198,7 @@ export const SettingsProfileScreen: React.FC<SettingsProfileScreenProps> = ({
             className="flex-1 py-2 px-3 bg-white/10 hover:bg-white/20 rounded-xl font-bold text-white text-[11px] flex items-center justify-center space-x-2 transition-colors border border-white/10"
           >
             <ImageIcon className="w-3.5 h-3.5 text-indigo-300" />
-            <span>Ubah Foto dari Galeri</span>
+            <span>{t.changePhoto}</span>
           </button>
           
           <button
@@ -207,7 +209,7 @@ export const SettingsProfileScreen: React.FC<SettingsProfileScreenProps> = ({
             className="py-2 px-3 bg-white/10 hover:bg-white/20 rounded-xl font-bold text-white text-[11px] flex items-center justify-center space-x-1.5 transition-colors border border-white/10 shrink-0"
           >
             <Edit2 className="w-3.5 h-3.5 text-indigo-300" />
-            <span>Ubah USN</span>
+            <span>{t.changeUsername}</span>
           </button>
         </div>
       </div>
@@ -216,13 +218,14 @@ export const SettingsProfileScreen: React.FC<SettingsProfileScreenProps> = ({
       <div className={`p-4 border rounded-[24px] shadow-xs space-y-3 ${
         isDark ? 'bg-[#1E293B] border-slate-800 text-white' : 'bg-white border-slate-200/80 text-slate-900'
       }`}>
-        <h3 className={`text-xs font-extrabold uppercase tracking-wider ${isDark ? 'text-slate-300' : 'text-slate-900'}`}>Mata Uang & Tampilan</h3>
+        <h3 className={`text-xs font-extrabold uppercase tracking-wider ${isDark ? 'text-slate-300' : 'text-slate-900'}`}>{t.currencyAndDisplay}</h3>
 
         <div className="space-y-2">
+          {/* Main Currency Selector */}
           <div className={`flex items-center justify-between p-2.5 rounded-xl ${isDark ? 'hover:bg-slate-800' : 'hover:bg-slate-50'}`}>
             <div className="flex items-center space-x-2.5">
               <Globe className="w-4 h-4 text-[#6C4CF5] dark:text-[#A78BFA]" />
-              <span className={`text-xs font-bold ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>Mata Uang Utama</span>
+              <span className={`text-xs font-bold ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>{t.mainCurrency}</span>
             </div>
             <select
               value={settings.currency}
@@ -237,10 +240,11 @@ export const SettingsProfileScreen: React.FC<SettingsProfileScreenProps> = ({
             </select>
           </div>
 
+          {/* Theme Selector */}
           <div className={`flex items-center justify-between p-2.5 rounded-xl ${isDark ? 'hover:bg-slate-800' : 'hover:bg-slate-50'}`}>
             <div className="flex items-center space-x-2.5">
               <Moon className="w-4 h-4 text-[#6C4CF5] dark:text-[#A78BFA]" />
-              <span className={`text-xs font-bold ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>Tema Tampilan</span>
+              <span className={`text-xs font-bold ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>{t.displayTheme}</span>
             </div>
             <select
               value={settings.theme}
@@ -249,9 +253,34 @@ export const SettingsProfileScreen: React.FC<SettingsProfileScreenProps> = ({
                 isDark ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-800'
               }`}
             >
-              <option value="LIGHT">Terang (Light)</option>
-              <option value="DARK">Gelap (Dark)</option>
-              <option value="SYSTEM">Sistem</option>
+              <option value="LIGHT">{t.lightTheme}</option>
+              <option value="DARK">{t.darkTheme}</option>
+              <option value="SYSTEM">{t.systemTheme}</option>
+            </select>
+          </div>
+
+          {/* App Language Selector */}
+          <div className={`flex items-center justify-between p-2.5 rounded-xl ${isDark ? 'hover:bg-slate-800' : 'hover:bg-slate-50'}`}>
+            <div className="flex items-center space-x-2.5">
+              <Languages className="w-4 h-4 text-[#6C4CF5] dark:text-[#A78BFA]" />
+              <span className={`text-xs font-bold ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>{t.languageSetting}</span>
+            </div>
+            <select
+              value={settings.language}
+              onChange={(e) => onUpdateSettings({ ...settings, language: e.target.value as any })}
+              className={`text-xs font-bold px-2.5 py-1 rounded-xl focus:outline-none ${
+                isDark ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-800'
+              }`}
+            >
+              <option value="ID">Indonesia 🇮🇩</option>
+              <option value="EN">English 🇺🇸</option>
+              <option value="ES">Español 🇪🇸</option>
+              <option value="JA">日本語 🇯🇵</option>
+              <option value="AR">العربية 🇸🇦</option>
+              <option value="FR">Français 🇫🇷</option>
+              <option value="DE">Deutsch 🇩🇪</option>
+              <option value="ZH">简体中文 🇨🇳</option>
+              <option value="KO">한국어 🇰🇷</option>
             </select>
           </div>
         </div>
@@ -261,13 +290,13 @@ export const SettingsProfileScreen: React.FC<SettingsProfileScreenProps> = ({
       <div className={`p-4 border rounded-[24px] shadow-xs space-y-3 ${
         isDark ? 'bg-[#1E293B] border-slate-800 text-white' : 'bg-white border-slate-200/80 text-slate-900'
       }`}>
-        <h3 className={`text-xs font-extrabold uppercase tracking-wider ${isDark ? 'text-slate-300' : 'text-slate-900'}`}>Keamanan & Proteksi PIN</h3>
+        <h3 className={`text-xs font-extrabold uppercase tracking-wider ${isDark ? 'text-slate-300' : 'text-slate-900'}`}>{t.securitySection}</h3>
 
         <div className="space-y-2">
           <div className={`flex items-center justify-between p-2.5 rounded-xl ${isDark ? 'hover:bg-slate-800' : 'hover:bg-slate-50'}`}>
             <div className="flex items-center space-x-2.5">
               <Lock className="w-4 h-4 text-emerald-500" />
-              <span className={`text-xs font-bold ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>Keamanan Biometrik / FaceID</span>
+              <span className={`text-xs font-bold ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>{t.biometricSecurity}</span>
             </div>
             <input
               type="checkbox"
@@ -280,7 +309,7 @@ export const SettingsProfileScreen: React.FC<SettingsProfileScreenProps> = ({
           <div className={`flex items-center justify-between p-2.5 rounded-xl ${isDark ? 'hover:bg-slate-800' : 'hover:bg-slate-50'}`}>
             <div className="flex items-center space-x-2.5">
               <Shield className="w-4 h-4 text-indigo-500" />
-              <span className={`text-xs font-bold ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>Proteksi PIN 6-Digit</span>
+              <span className={`text-xs font-bold ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>{t.pinSecurity}</span>
             </div>
             <input
               type="checkbox"
@@ -296,7 +325,7 @@ export const SettingsProfileScreen: React.FC<SettingsProfileScreenProps> = ({
       <div className={`p-4 border rounded-[24px] shadow-xs space-y-3 ${
         isDark ? 'bg-[#1E293B] border-slate-800 text-white' : 'bg-white border-slate-200/80 text-slate-900'
       }`}>
-        <h3 className={`text-xs font-extrabold uppercase tracking-wider ${isDark ? 'text-slate-300' : 'text-slate-900'}`}>Cadangkan Data (Offline First)</h3>
+        <h3 className={`text-xs font-extrabold uppercase tracking-wider ${isDark ? 'text-slate-300' : 'text-slate-900'}`}>{t.dataBackup}</h3>
 
         <div className="grid grid-cols-2 gap-2">
           <button
@@ -327,7 +356,7 @@ export const SettingsProfileScreen: React.FC<SettingsProfileScreenProps> = ({
           }`}
         >
           <RefreshCw className="w-3.5 h-3.5" />
-          <span>Reset Semua Data Aplikasi</span>
+          <span>{t.resetAllData}</span>
         </button>
 
         {onLogout && (
@@ -335,7 +364,7 @@ export const SettingsProfileScreen: React.FC<SettingsProfileScreenProps> = ({
             onClick={onLogout}
             className="w-full py-3 bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white text-xs font-black rounded-2xl shadow-lg shadow-rose-600/30 transition-all flex items-center justify-center space-x-2 border border-rose-400/30"
           >
-            <span>Keluar Sesi (Logout Firebase)</span>
+            <span>{t.logoutFirebase}</span>
           </button>
         )}
       </div>

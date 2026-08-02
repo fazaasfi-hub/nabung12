@@ -1,4 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { onAuthStateChanged, User } from 'firebase/auth';
+import { auth } from './lib/firebase';
+import { logoutUser, UserCloudProfile } from './services/firebaseAuthService';
 import {
   SavingsAccount,
   Transaction,
@@ -7,7 +11,11 @@ import {
   Wishlist,
   CategoryBudget,
   AppSettings,
-  UserProfile
+  UserProfile,
+  ConnectedWallet,
+  PendingWalletNotification,
+  SyncLogEntry,
+  AppNotification
 } from './types';
 import {
   DEFAULT_CATEGORIES,
@@ -17,50 +25,148 @@ import {
   INITIAL_WISHLIST,
   INITIAL_BUDGETS,
   DEFAULT_USER_PROFILE,
-  DEFAULT_SETTINGS
+  DEFAULT_SETTINGS,
+  INITIAL_NOTIFICATIONS
 } from './data/mockInitialData';
 import {
   INITIAL_CONNECTED_WALLETS,
   INITIAL_PENDING_NOTIFICATIONS,
   INITIAL_SYNC_LOGS
 } from './data/mockWalletData';
-import { ConnectedWallet, PendingWalletNotification, SyncLogEntry } from './types';
-import { PhoneSimulator } from './components/PhoneSimulator';
-import { CodeExplorer } from './components/CodeExplorer';
-import { Smartphone, Code2, Sparkles, RefreshCw } from 'lucide-react';
+
+// App Screens Imports
+import { getTranslation } from './utils/translations';
+import { SplashScreen } from './components/screens/SplashScreen';
+import { OnboardingScreen } from './components/screens/OnboardingScreen';
+import { AuthScreen } from './components/screens/AuthScreen';
+import { DashboardScreen } from './components/screens/DashboardScreen';
+import { SavingsScreen } from './components/screens/SavingsScreen';
+import { TransactionScreen } from './components/screens/TransactionScreen';
+import { CalendarScreen } from './components/screens/CalendarScreen';
+import { StatisticsScreen } from './components/screens/StatisticsScreen';
+import { BudgetPlannerScreen } from './components/screens/BudgetPlannerScreen';
+import { WishlistGoalScreen } from './components/screens/WishlistGoalScreen';
+import { SettingsProfileScreen } from './components/screens/SettingsProfileScreen';
+import { SecurityPinScreen } from './components/screens/SecurityPinScreen';
+import { GlobalSearchScreen } from './components/screens/GlobalSearchScreen';
+import { WalletIntegrationScreen } from './components/screens/WalletIntegrationScreen';
+import { ToolsScreen } from './components/screens/ToolsScreen';
+import { AiAdvisorScreen } from './components/screens/AiAdvisorScreen';
+import { RecurringRulesScreen } from './components/screens/RecurringRulesScreen';
+import { DebtTrackerScreen } from './components/screens/DebtTrackerScreen';
+import { ExportReportScreen } from './components/screens/ExportReportScreen';
+import { BillSplitterScreen } from './components/screens/BillSplitterScreen';
+
+// Modals
+import { ScanQrModal } from './components/modals/ScanQrModal';
+import { NotificationsModal } from './components/modals/NotificationsModal';
+
+// Icons
+import {
+  LayoutDashboard,
+  Wallet,
+  Receipt,
+  Target,
+  Settings,
+  Sparkles,
+  Bell,
+  Sun,
+  Moon,
+  Search,
+  Lock,
+  RotateCcw,
+  ShieldCheck,
+  ArrowRight,
+  Check
+} from 'lucide-react';
 
 export default function App() {
-  const [viewMode, setViewMode] = useState<'SIMULATOR' | 'CODEBASE'>('SIMULATOR');
+  // Refs and states for smooth horizontal sliding liquid glass dock
+  const dockContainerRef = useRef<HTMLDivElement>(null);
+  const dockTrackRef = useRef<HTMLDivElement>(null);
+  const [dragConstraintsLeft, setDragConstraintsLeft] = useState(0);
+
+  // Navigation & Core flows
+  const [currentScreen, setCurrentScreen] = useState<'splash' | 'onboarding' | 'login' | 'dashboard' | string>('splash');
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [authUser, setAuthUser] = useState<User | null>(null);
+  const [isLocked, setIsLocked] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isScanQrOpen, setIsScanQrOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [notifications, setNotifications] = useState<AppNotification[]>(INITIAL_NOTIFICATIONS);
 
   // LocalStorage state persistence
   const [accounts, setAccounts] = useState<SavingsAccount[]>(() => {
     const saved = localStorage.getItem('fz_accounts');
-    return saved ? JSON.parse(saved) : INITIAL_SAVINGS_ACCOUNTS;
+    if (saved !== null) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return INITIAL_SAVINGS_ACCOUNTS;
   });
 
   const [transactions, setTransactions] = useState<Transaction[]>(() => {
     const saved = localStorage.getItem('fz_transactions');
-    return saved ? JSON.parse(saved) : INITIAL_TRANSACTIONS;
+    if (saved !== null) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return INITIAL_TRANSACTIONS;
   });
 
   const [categories, setCategories] = useState<Category[]>(() => {
     const saved = localStorage.getItem('fz_categories');
-    return saved ? JSON.parse(saved) : DEFAULT_CATEGORIES;
+    if (saved !== null) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return DEFAULT_CATEGORIES;
   });
 
   const [goals, setGoals] = useState<Goal[]>(() => {
     const saved = localStorage.getItem('fz_goals');
-    return saved ? JSON.parse(saved) : INITIAL_GOALS;
+    if (saved !== null) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return INITIAL_GOALS;
   });
 
   const [wishlists, setWishlists] = useState<Wishlist[]>(() => {
     const saved = localStorage.getItem('fz_wishlists');
-    return saved ? JSON.parse(saved) : INITIAL_WISHLIST;
+    if (saved !== null) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return INITIAL_WISHLIST;
   });
 
   const [budgets, setBudgets] = useState<CategoryBudget[]>(() => {
     const saved = localStorage.getItem('fz_budgets');
-    return saved ? JSON.parse(saved) : INITIAL_BUDGETS;
+    if (saved !== null) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return INITIAL_BUDGETS;
   });
 
   const [settings, setSettings] = useState<AppSettings>(() => {
@@ -88,6 +194,45 @@ export default function App() {
     return saved ? JSON.parse(saved) : INITIAL_SYNC_LOGS;
   });
 
+  // Calculate dynamic bottom dock drag bounds
+  useEffect(() => {
+    const updateConstraints = () => {
+      if (dockContainerRef.current && dockTrackRef.current) {
+        const containerWidth = dockContainerRef.current.offsetWidth;
+        const trackWidth = dockTrackRef.current.scrollWidth;
+        const maxDrag = Math.min(0, containerWidth - trackWidth - 12);
+        setDragConstraintsLeft(maxDrag);
+      }
+    };
+
+    updateConstraints();
+    const timer = setTimeout(updateConstraints, 250);
+
+    window.addEventListener('resize', updateConstraints);
+    return () => {
+      window.removeEventListener('resize', updateConstraints);
+      clearTimeout(timer);
+    };
+  }, [currentScreen, isLocked]);
+
+  // Track Firebase Auth State
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setIsAuthenticated(true);
+        setAuthUser(user);
+        // Save auth state
+        localStorage.setItem('fz_is_authenticated', 'true');
+      } else {
+        const localAuth = localStorage.getItem('fz_is_authenticated') === 'true';
+        setIsAuthenticated(localAuth);
+        setAuthUser(null);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   // Save changes to LocalStorage
   useEffect(() => {
     localStorage.setItem('fz_accounts', JSON.stringify(accounts));
@@ -103,7 +248,42 @@ export default function App() {
     localStorage.setItem('fz_syncLogs', JSON.stringify(syncLogs));
   }, [accounts, transactions, categories, goals, wishlists, budgets, settings, profile, wallets, pendingNotifs, syncLogs]);
 
-  // Handlers
+  // Flow handlers
+  const handleFinishLaunch = (dest: 'ONBOARDING' | 'LOGIN' | 'DASHBOARD') => {
+    const isFirstInstall = localStorage.getItem('fz_first_install') !== 'false';
+
+    if (isFirstInstall) {
+      setCurrentScreen('onboarding');
+    } else {
+      setCurrentScreen('dashboard');
+    }
+  };
+
+  const handleFinishOnboarding = () => {
+    localStorage.setItem('fz_first_install', 'false');
+    setCurrentScreen('dashboard');
+  };
+
+  const handleAuthSuccess = (cloudProf: UserCloudProfile, isNewUser: boolean) => {
+    setIsAuthenticated(true);
+    localStorage.setItem('fz_is_authenticated', 'true');
+    setProfile({
+      ...profile,
+      name: cloudProf.displayName || 'Faza Asfi',
+      email: cloudProf.email
+    });
+    setCurrentScreen('dashboard');
+  };
+
+  const handleLogout = async () => {
+    await logoutUser();
+    setAuthUser(null);
+    setIsAuthenticated(false);
+    localStorage.removeItem('fz_is_authenticated');
+    setCurrentScreen('dashboard');
+  };
+
+  // State modification Handlers
   const handleAddAccount = (acc: SavingsAccount) => {
     setAccounts([acc, ...accounts]);
   };
@@ -232,9 +412,12 @@ export default function App() {
     setWallets(INITIAL_CONNECTED_WALLETS);
     setPendingNotifs(INITIAL_PENDING_NOTIFICATIONS);
     setSyncLogs(INITIAL_SYNC_LOGS);
+    localStorage.setItem('fz_first_install', 'true');
+    localStorage.removeItem('fz_is_authenticated');
+    setCurrentScreen('splash');
   };
 
-  // Wallet Handlers
+  // Wallet Sync Handlers
   const handleConnectWallet = (newWallet: ConnectedWallet) => {
     setWallets(prev => [newWallet, ...prev]);
     const newLog: SyncLogEntry = {
@@ -319,116 +502,448 @@ export default function App() {
     setWallets(prev => prev.map(w => w.id === walletId ? { ...w, isNotificationListenerActive: enabled } : w));
   };
 
+  const handleOpenQuickAction = (action: 'INCOME' | 'EXPENSE' | 'TRANSFER' | 'TARGET' | 'SCAN_QR') => {
+    if (action === 'TARGET') {
+      setCurrentScreen('wishlist');
+    } else if (action === 'TRANSFER') {
+      setCurrentScreen('savings');
+    } else if (action === 'SCAN_QR') {
+      setIsScanQrOpen(true);
+    } else {
+      setCurrentScreen('transactions');
+    }
+  };
+
+  const handleQrPaySuccess = (merchant: string, amount: number) => {
+    const newTx: Transaction = {
+      id: `tx_qr_${Date.now()}`,
+      title: `QRIS: ${merchant}`,
+      amount: amount,
+      type: 'EXPENSE',
+      categoryId: 'cat_makan',
+      accountId: accounts[0]?.id || 'acc_utama',
+      date: new Date().toISOString().slice(0, 10),
+      time: new Date().toTimeString().slice(0, 5),
+      notes: 'Pembayaran Instan via QRIS Scan'
+    };
+    handleAddTransaction(newTx);
+
+    // Add notification
+    const newNotif: AppNotification = {
+      id: `notif_${Date.now()}`,
+      title: 'Pembayaran QRIS Berhasil ⚡',
+      message: `Telah dibayar Rp ${amount.toLocaleString('id-ID')} ke ${merchant}`,
+      time: 'Baru saja',
+      type: 'SUCCESS',
+      isRead: false
+    };
+    setNotifications([newNotif, ...notifications]);
+  };
+
+  const handleClearNotifications = () => {
+    setNotifications([]);
+  };
+
+  const handleMarkNotifRead = (id: string) => {
+    setNotifications(notifications.map(n => n.id === id ? { ...n, isRead: true } : n));
+  };
+
+  const isDark = settings.theme === 'DARK';
+  const t = getTranslation(settings.language);
+
+  // Navigation tabs config
+  const navTabs = [
+    { id: 'dashboard', label: t.tabDashboard, icon: LayoutDashboard },
+    { id: 'savings', label: t.tabSavings, icon: Wallet },
+    { id: 'transactions', label: t.tabTransactions, icon: Receipt },
+    { id: 'wishlist', label: t.tabTarget, icon: Target },
+    { id: 'tools', label: t.tabTools, icon: Sparkles },
+    { id: 'settings', label: t.tabProfile, icon: Settings }
+  ];
+
+  const isFullAppView = currentScreen !== 'splash' && currentScreen !== 'onboarding' && !isLocked;
+
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 font-sans antialiased selection:bg-[#6C4CF5] selection:text-white">
-      {/* Top App Bar */}
-      <header className="sticky top-0 z-50 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-6 py-4">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#6C4CF5] text-white flex items-center justify-center shadow-lg shadow-purple-600/30">
-              <Sparkles className="w-5 h-5" />
-            </div>
-            <div>
-              <h1 className="text-lg font-black text-white tracking-tight flex items-center gap-2">
-                <span>FZ Savings</span>
-                <span className="text-xs font-semibold px-2.5 py-0.5 bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 rounded-full">
-                  Material 3 Fintech Redesign
-                </span>
-              </h1>
-              <p className="text-xs text-slate-400">Jetpack Compose, MVVM, Clean Architecture, Room & Hilt</p>
-            </div>
+    <div className={`min-h-screen flex flex-col w-full relative transition-colors duration-300 font-sans antialiased selection:bg-[#6C4CF5] selection:text-white ${
+      isDark ? 'bg-[#0E1022] text-slate-100' : 'bg-[#F6F7FB] text-slate-800'
+    }`}>
+      
+
+
+      {/* 2. Top Navigation Bar (Only for main screens) */}
+      {isFullAppView && (
+        <div className={`px-5 py-3 border-b flex items-center justify-between z-30 transition-colors ${
+          isDark ? 'bg-[#0E1022]/90 border-slate-800/80' : 'bg-white/90 border-slate-200/80'
+        }`}>
+          <div className="flex items-center space-x-2">
+            <div className="w-3 h-3 rounded-full bg-[#6C4CF5] shadow-xs shadow-purple-500/50" />
+            <span className={`text-xs font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              FZ SAVINGS
+            </span>
           </div>
 
-          {/* Mode Switcher Buttons */}
-          <div className="flex items-center space-x-2 bg-slate-950 p-1.5 rounded-2xl border border-slate-800">
+          <div className="flex items-center space-x-1">
+            {/* Replay App Splash Screen */}
             <button
-              onClick={() => setViewMode('SIMULATOR')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 ${
-                viewMode === 'SIMULATOR'
-                  ? 'bg-[#6C4CF5] text-white shadow-md'
-                  : 'text-slate-400 hover:text-slate-200'
+              onClick={() => setCurrentScreen('splash')}
+              className={`p-1.5 rounded-xl transition-colors ${
+                isDark ? 'text-indigo-400 hover:bg-slate-800' : 'text-indigo-600 hover:bg-slate-100'
               }`}
+              title="Mulai Ulang Splash Screen"
             >
-              <Smartphone className="w-4 h-4" />
-              <span>App Simulator</span>
+              <RotateCcw className="w-4 h-4" />
             </button>
 
+            {/* Global Search */}
             <button
-              onClick={() => setViewMode('CODEBASE')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 ${
-                viewMode === 'CODEBASE'
-                  ? 'bg-[#6C4CF5] text-white shadow-md'
-                  : 'text-slate-400 hover:text-slate-200'
+              onClick={() => setIsSearchOpen(!isSearchOpen)}
+              className={`p-1.5 rounded-xl transition-colors ${
+                isSearchOpen
+                  ? 'bg-[#6C4CF5] text-white shadow-xs'
+                  : isDark ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-100'
               }`}
+              title="Cari Data"
             >
-              <Code2 className="w-4 h-4" />
-              <span>Android Studio Code & ZIP</span>
+              <Search className="w-4 h-4" />
+            </button>
+
+            {/* Notifications */}
+            <button
+              onClick={() => setIsNotificationsOpen(true)}
+              className={`p-1.5 rounded-xl transition-colors relative ${
+                isDark ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-100'
+              }`}
+              title="Notifikasi"
+            >
+              <Bell className="w-4 h-4" />
+              {notifications.filter(n => !n.isRead).length > 0 && (
+                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white" />
+              )}
+            </button>
+
+            {/* Dark/Light Switcher */}
+            <button
+              onClick={() => setSettings({ ...settings, theme: isDark ? 'LIGHT' : 'DARK' })}
+              className={`p-1.5 rounded-xl transition-colors ${
+                isDark ? 'text-amber-400 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-100'
+              }`}
+              title="Ganti Tema"
+            >
+              {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
+
+            {/* Lock Device */}
+            <button
+              onClick={() => setIsLocked(true)}
+              className={`p-1.5 rounded-xl transition-colors ${
+                isDark ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-100'
+              }`}
+              title="Kunci Layar"
+            >
+              <Lock className="w-4 h-4" />
             </button>
           </div>
         </div>
-      </header>
+      )}
 
-      {/* Main Container */}
-      <main className="max-w-7xl mx-auto px-6 py-6">
-        {viewMode === 'SIMULATOR' ? (
-          <div className="space-y-4">
-            <div className="text-center max-w-2xl mx-auto space-y-1">
-              <h2 className="text-xl font-black text-white">Live Premium Fintech App Simulator</h2>
-              <p className="text-xs text-slate-400">
-                Uji coba langsung semua fitur FZ Savings: Revolut-style Card, QRIS Payment, Dark Mode, Analytics, E-Wallet Integration, Kalender & Target Tabungan.
-              </p>
-            </div>
+      {/* 3. Main Screen Viewport */}
+      <div className="flex-1 w-full max-w-full relative flex flex-col min-h-0">
+        
+        {/* Splash Screen */}
+        {currentScreen === 'splash' && (
+          <SplashScreen
+            onFinishLaunch={handleFinishLaunch}
+            isFirstInstall={localStorage.getItem('fz_first_install') !== 'false'}
+            isLoggedIn={localStorage.getItem('fz_is_authenticated') === 'true'}
+          />
+        )}
 
-            <PhoneSimulator
-              accounts={accounts}
-              transactions={transactions}
-              categories={categories}
-              goals={goals}
-              wishlists={wishlists}
-              budgets={budgets}
-              settings={settings}
-              profile={profile}
-              wallets={wallets}
-              pendingNotifs={pendingNotifs}
-              syncLogs={syncLogs}
-              onAddAccount={handleAddAccount}
-              onDeleteAccount={handleDeleteAccount}
-              onAddTransaction={handleAddTransaction}
-              onSoftDeleteTransaction={handleSoftDeleteTransaction}
-              onRestoreTransaction={handleRestoreTransaction}
-              onAddGoal={handleAddGoal}
-              onAddWishlist={handleAddWishlist}
-              onDeleteWishlist={handleDeleteWishlist}
-              onDepositGoal={handleDepositGoal}
-              onDepositWishlist={handleDepositWishlist}
-              onUpdateBudget={handleUpdateBudget}
-              onUpdateSettings={setSettings}
-              onUpdateProfile={setProfile}
-              onExportBackup={handleExportBackup}
-              onExportCsv={handleExportCsv}
-              onResetData={handleResetData}
-              onConnectWallet={handleConnectWallet}
-              onDisconnectWallet={handleDisconnectWallet}
-              onSyncWallet={handleSyncWallet}
-              onAcceptNotification={handleAcceptNotification}
-              onRejectNotification={handleRejectNotification}
-              onManualImportTransactions={handleManualImportTransactions}
-              onToggleNotificationListener={handleToggleNotificationListener}
-            />
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="text-center max-w-2xl mx-auto space-y-1">
-              <h2 className="text-xl font-black text-white">Android Studio Source Code Explorer</h2>
-              <p className="text-xs text-slate-400">
-                Source code Kotlin Clean Architecture lengkap (Room, Hilt, StateFlow, Material 3 Composables, ViewModels).
-              </p>
-            </div>
+        {/* Onboarding Screen */}
+        {currentScreen === 'onboarding' && (
+          <OnboardingScreen
+            onFinishOnboarding={handleFinishOnboarding}
+          />
+        )}
 
-            <CodeExplorer />
+        {/* Authentication / Login-Register Screen */}
+        {currentScreen === 'login' && (
+          <AuthScreen
+            onAuthSuccess={handleAuthSuccess}
+          />
+        )}
+
+        {/* Secure Screen Lock */}
+        {isLocked && (
+          <SecurityPinScreen
+            correctPin={settings.pin}
+            isBiometricsEnabled={settings.isBiometricsEnabled}
+            onSuccess={() => setIsLocked(false)}
+          />
+        )}
+
+        {/* Global Search Screen overlay */}
+        {isSearchOpen && isFullAppView && (
+          <GlobalSearchScreen
+            transactions={transactions}
+            accounts={accounts}
+            goals={goals}
+            currency={settings.currency}
+            isDark={isDark}
+            onNavigate={(scr) => {
+              setCurrentScreen(scr);
+              setIsSearchOpen(false);
+            }}
+          />
+        )}
+
+        {/* Regular Application Screens */}
+        {isFullAppView && !isSearchOpen && (
+          <div className="flex-1 overflow-y-auto px-5 pt-4 pb-28 w-full box-border">
+            
+            {currentScreen === 'dashboard' && (
+              <DashboardScreen
+                userProfile={profile}
+                accounts={accounts}
+                transactions={transactions}
+                goals={goals}
+                currency={settings.currency}
+                theme={settings.theme}
+                language={settings.language}
+                onNavigate={(scr) => setCurrentScreen(scr)}
+                onOpenQuickAction={handleOpenQuickAction}
+              />
+            )}
+
+            {currentScreen === 'savings' && (
+              <SavingsScreen
+                accounts={accounts}
+                currency={settings.currency}
+                isDark={isDark}
+                language={settings.language}
+                onAddAccount={handleAddAccount}
+                onDeleteAccount={handleDeleteAccount}
+                onOpenTransfer={() => setCurrentScreen('transactions')}
+              />
+            )}
+
+            {currentScreen === 'transactions' && (
+              <TransactionScreen
+                transactions={transactions}
+                categories={categories}
+                accounts={accounts}
+                currency={settings.currency}
+                isDark={isDark}
+                language={settings.language}
+                onAddTransaction={handleAddTransaction}
+                onSoftDeleteTransaction={handleSoftDeleteTransaction}
+                onRestoreTransaction={handleRestoreTransaction}
+                onNavigateToSavings={() => setCurrentScreen('savings')}
+              />
+            )}
+
+            {currentScreen === 'calendar' && (
+              <CalendarScreen
+                transactions={transactions}
+                currency={settings.currency}
+                isDark={isDark}
+                language={settings.language}
+              />
+            )}
+
+            {currentScreen === 'statistics' && (
+              <StatisticsScreen
+                transactions={transactions}
+                categories={categories}
+                currency={settings.currency}
+                isDark={isDark}
+                language={settings.language}
+              />
+            )}
+
+            {currentScreen === 'budget' && (
+              <BudgetPlannerScreen
+                budgets={budgets}
+                categories={categories}
+                currency={settings.currency}
+                isDark={isDark}
+                language={settings.language}
+                onUpdateBudget={handleUpdateBudget}
+              />
+            )}
+
+            {currentScreen === 'wishlist' && (
+              <WishlistGoalScreen
+                goals={goals}
+                wishlists={wishlists}
+                currency={settings.currency}
+                isDark={isDark}
+                language={settings.language}
+                onAddGoal={handleAddGoal}
+                onDepositGoal={handleDepositGoal}
+                onAddWishlist={handleAddWishlist}
+                onDeleteWishlist={handleDeleteWishlist}
+              />
+            )}
+
+            {currentScreen === 'walletSync' && (
+              <WalletIntegrationScreen
+                wallets={wallets}
+                pendingNotifs={pendingNotifs}
+                syncLogs={syncLogs}
+                categories={categories}
+                currency={settings.currency}
+                isDark={isDark}
+                language={settings.language}
+                onConnectWallet={handleConnectWallet}
+                onDisconnectWallet={handleDisconnectWallet}
+                onSyncWallet={handleSyncWallet}
+                onAcceptNotification={handleAcceptNotification}
+                onRejectNotification={handleRejectNotification}
+                onManualImportTransactions={handleManualImportTransactions}
+                onToggleNotificationListener={handleToggleNotificationListener}
+              />
+            )}
+
+            {currentScreen === 'settings' && (
+              <SettingsProfileScreen
+                userProfile={profile}
+                settings={settings}
+                isDark={isDark}
+                onUpdateProfile={setProfile}
+                onUpdateSettings={setSettings}
+                onExportBackup={handleExportBackup}
+                onExportCsv={handleExportCsv}
+                onResetData={handleResetData}
+              />
+            )}
+
+            {currentScreen === 'tools' && (
+              <ToolsScreen
+                onNavigateTool={(tool) => setCurrentScreen(tool)}
+                isDark={isDark}
+                language={settings.language}
+              />
+            )}
+
+            {currentScreen === 'aiAdvisor' && (
+              <AiAdvisorScreen
+                accounts={accounts}
+                transactions={transactions}
+                currency={settings.currency}
+                isDark={isDark}
+                language={settings.language}
+              />
+            )}
+
+            {currentScreen === 'recurring' && (
+              <RecurringRulesScreen
+                accounts={accounts}
+                currency={settings.currency}
+                isDark={isDark}
+                language={settings.language}
+              />
+            )}
+
+            {currentScreen === 'debt' && (
+              <DebtTrackerScreen
+                currency={settings.currency}
+                isDark={isDark}
+                language={settings.language}
+              />
+            )}
+
+            {currentScreen === 'export' && (
+              <ExportReportScreen
+                userProfile={profile}
+                accounts={accounts}
+                transactions={transactions}
+                currency={settings.currency}
+                isDark={isDark}
+                language={settings.language}
+              />
+            )}
+
+            {currentScreen === 'splitBill' && (
+              <BillSplitterScreen
+                currency={settings.currency}
+                isDark={isDark}
+                language={settings.language}
+              />
+            )}
           </div>
         )}
-      </main>
+      </div>
+
+      {/* 4. Elegant Floating Liquid Glass Bottom Navigation Dock */}
+      {isFullAppView && (
+        <div 
+          ref={dockContainerRef}
+          className={`fixed bottom-5 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-lg z-40 p-1.5 rounded-3xl backdrop-blur-xl border transition-all duration-300 select-none overflow-hidden ${
+            isDark 
+              ? 'bg-[#0E1022]/45 border-white/[0.08] shadow-[0_20px_50px_rgba(0,0,0,0.55),inset_0_1px_1px_rgba(255,255,255,0.1)]' 
+              : 'bg-white/40 border-white/50 shadow-[0_20px_50px_rgba(108,76,245,0.12),inset_0_1px_2px_rgba(255,255,255,0.8)]'
+          }`}
+          style={{ touchAction: 'pan-x' }}
+        >
+          <motion.div
+            ref={dockTrackRef}
+            drag="x"
+            dragConstraints={{ left: dragConstraintsLeft, right: 0 }}
+            dragElastic={0.2}
+            dragTransition={{ power: 0.2, timeConstant: 250 }}
+            className="flex items-center gap-1.5 cursor-grab active:cursor-grabbing w-max min-w-full px-1 py-0.5 no-scrollbar overflow-x-visible"
+          >
+            {navTabs.map((tab) => {
+              const isActive = currentScreen === tab.id || (tab.id === 'tools' && ['tools', 'aiAdvisor', 'recurring', 'debt', 'export', 'splitBill'].includes(currentScreen));
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setCurrentScreen(tab.id)}
+                  className={`relative flex flex-col items-center justify-center py-2.5 px-4 min-w-[78px] rounded-2xl transition-all duration-300 flex-1 ${
+                    isActive 
+                      ? isDark ? 'text-white' : 'text-white'
+                      : isDark ? 'text-zinc-400 hover:text-zinc-200' : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                  title={tab.label}
+                  style={{ WebkitTapHighlightColor: 'transparent' }}
+                >
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeDockIndicator"
+                      className="absolute inset-0 bg-[#6C4CF5] rounded-2xl -z-10 shadow-[0_8px_20px_rgba(108,76,245,0.35)]"
+                      transition={{ type: "spring", stiffness: 380, damping: 26 }}
+                    />
+                  )}
+                  <tab.icon className={`w-4 h-4 shrink-0 transition-transform duration-300 ${isActive ? 'scale-110' : 'scale-100'}`} />
+                  <span className={`text-[10px] font-semibold mt-1 truncate tracking-tight text-center w-full transition-all duration-300 ${isActive ? 'font-bold opacity-100' : 'opacity-85'}`}>
+                    {tab.label}
+                  </span>
+                </button>
+              );
+            })}
+          </motion.div>
+        </div>
+      )}
+
+      {/* QRIS Scanner Modal */}
+      {isScanQrOpen && (
+        <ScanQrModal
+          currency={settings.currency}
+          onClose={() => setIsScanQrOpen(false)}
+          onPaySuccess={handleQrPaySuccess}
+        />
+      )}
+
+      {/* Notifications Drawer Modal */}
+      {isNotificationsOpen && (
+        <NotificationsModal
+          notifications={notifications}
+          onClose={() => setIsNotificationsOpen(false)}
+          onClearAll={handleClearNotifications}
+          onMarkAsRead={handleMarkNotifRead}
+        />
+      )}
+
     </div>
   );
 }

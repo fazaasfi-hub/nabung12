@@ -87,7 +87,7 @@ export interface AppSettings {
   isBiometricsEnabled: boolean;
   isAutoLockEnabled: boolean;
   theme: 'LIGHT' | 'DARK' | 'SYSTEM';
-  language: 'ID' | 'EN';
+  language: 'ID' | 'EN' | 'ES' | 'JA' | 'AR' | 'FR' | 'DE' | 'ZH' | 'KO';
   currency: 'IDR' | 'USD' | 'EUR';
   dateFormat: 'DD/MM/YYYY' | 'YYYY-MM-DD' | 'MM/DD/YYYY';
   autoBackup: boolean;

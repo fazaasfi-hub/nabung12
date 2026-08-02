@@ -30,6 +30,8 @@ import {
 } from 'lucide-react';
 import { AreaChart, Area, ResponsiveContainer, Tooltip } from 'recharts';
 
+import { getTranslation } from '../../utils/translations';
+
 interface DashboardScreenProps {
   userProfile: UserProfile;
   accounts: SavingsAccount[];
@@ -37,6 +39,7 @@ interface DashboardScreenProps {
   goals: Goal[];
   currency: 'IDR' | 'USD' | 'EUR';
   theme?: 'LIGHT' | 'DARK' | 'SYSTEM';
+  language?: string;
   onNavigate: (screen: string) => void;
   onOpenQuickAction: (action: 'INCOME' | 'EXPENSE' | 'TRANSFER' | 'TARGET' | 'SCAN_QR') => void;
 }
@@ -48,9 +51,11 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   goals,
   currency,
   theme = 'DARK',
+  language = 'ID',
   onNavigate,
   onOpenQuickAction
 }) => {
+  const t = getTranslation(language);
   const [hideBalance, setHideBalance] = useState(false);
   const [activeAccountIndex, setActiveAccountIndex] = useState(0);
   const greetingInfo = getTimeBasedGreeting();
@@ -118,7 +123,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
           <button
             onClick={() => onNavigate('globalSearch')}
             className="w-9 h-9 rounded-full bg-zinc-800/80 hover:bg-zinc-700/80 border border-zinc-700/50 flex items-center justify-center text-zinc-300 transition-colors"
-            title="Cari Transaksi"
+            title={t.searchTooltip}
           >
             <Search className="w-4 h-4" />
           </button>
@@ -126,7 +131,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
           <button
             onClick={() => onNavigate('settings')}
             className="w-9 h-9 rounded-full bg-zinc-800/80 hover:bg-zinc-700/80 border border-zinc-700/50 flex items-center justify-center text-zinc-300 transition-colors relative"
-            title="Pengaturan"
+            title={t.settingsTooltip}
           >
             <Bell className="w-4 h-4" />
           </button>
@@ -140,20 +145,20 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
           <div className="flex items-center space-x-1.5 min-w-0">
             <div className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
             <span className="text-[10px] font-bold tracking-wider text-zinc-400 uppercase truncate">
-              TOTAL SALDO
+              {t.totalBalance}
             </span>
           </div>
 
           <div className="flex items-center space-x-2 shrink-0">
             <span className="inline-flex items-center space-x-1 px-2 py-0.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-semibold rounded-full border border-emerald-500/20">
               <ArrowUp className="w-3 h-3" />
-              <span>{savingsRate}% Terhemat</span>
+              <span>{savingsRate}% {t.savedRateSuffix}</span>
             </span>
 
             <button
               onClick={() => setHideBalance(!hideBalance)}
               className="p-1.5 bg-zinc-800/60 hover:bg-zinc-700/60 rounded-lg text-zinc-300 transition-colors border border-zinc-700/50"
-              title={hideBalance ? 'Tampilkan Saldo' : 'Sembunyikan Saldo'}
+              title={hideBalance ? t.showBalance : t.hideBalance}
             >
               {hideBalance ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
             </button>
@@ -174,7 +179,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
               <ArrowDownRight className="w-3.5 h-3.5" />
             </div>
             <div className="min-w-0">
-              <span className="text-[9px] font-medium uppercase tracking-wider text-zinc-400 block">Pemasukan</span>
+              <span className="text-[9px] font-medium uppercase tracking-wider text-zinc-400 block">{t.totalIncome}</span>
               <span className="text-xs font-bold text-emerald-400 font-mono truncate block">
                 {hideBalance ? '••••••••' : `+${formatCurrency(totalIncomeMonth, currency)}`}
               </span>
@@ -186,7 +191,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
               <ArrowUpRight className="w-3.5 h-3.5" />
             </div>
             <div className="min-w-0">
-              <span className="text-[9px] font-medium uppercase tracking-wider text-zinc-400 block">Pengeluaran</span>
+              <span className="text-[9px] font-medium uppercase tracking-wider text-zinc-400 block">{t.totalExpense}</span>
               <span className="text-xs font-bold text-rose-400 font-mono truncate block">
                 {hideBalance ? '••••••••' : `-${formatCurrency(totalExpenseMonth, currency)}`}
               </span>
@@ -198,7 +203,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
       {/* 3. QUICK ACTIONS (EXACTLY 4 EQUAL BUTTONS PER ROW) */}
       <div className="space-y-2">
         <h3 className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 px-1">
-          Aksi Cepat
+          {t.quickActions}
         </h3>
 
         <div className="grid grid-cols-4 gap-2">
@@ -209,7 +214,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
             <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20">
               <PlusCircle className="w-4 h-4" />
             </div>
-            <span className="text-[10px] font-bold text-zinc-200 truncate w-full">Setor Kas</span>
+            <span className="text-[10px] font-bold text-zinc-200 truncate w-full">{t.depositCash}</span>
           </button>
 
           <button
@@ -219,7 +224,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
             <div className="w-9 h-9 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center border border-rose-500/20">
               <MinusCircle className="w-4 h-4" />
             </div>
-            <span className="text-[10px] font-bold text-zinc-200 truncate w-full">Tarik Kas</span>
+            <span className="text-[10px] font-bold text-zinc-200 truncate w-full">{t.withdrawCash}</span>
           </button>
 
           <button
@@ -229,7 +234,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
             <div className="w-9 h-9 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center border border-indigo-500/20">
               <Repeat className="w-4 h-4" />
             </div>
-            <span className="text-[10px] font-bold text-zinc-200 truncate w-full">Transfer</span>
+            <span className="text-[10px] font-bold text-zinc-200 truncate w-full">{t.transfer}</span>
           </button>
 
           <button
@@ -239,7 +244,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
             <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center border border-amber-500/20">
               <QrCode className="w-4 h-4" />
             </div>
-            <span className="text-[10px] font-bold text-zinc-200 truncate w-full">Scan QRIS</span>
+            <span className="text-[10px] font-bold text-zinc-200 truncate w-full">{t.scanQris}</span>
           </button>
         </div>
       </div>
@@ -248,13 +253,13 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
       <div className="space-y-2">
         <div className="flex items-center justify-between px-1">
           <h3 className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">
-            Rekening Anda ({accounts.length})
+            {t.yourAccounts} ({accounts.length})
           </h3>
           <span
             className="text-[10px] font-semibold text-indigo-400 flex items-center gap-0.5 cursor-pointer hover:text-indigo-300"
             onClick={() => onNavigate('savings')}
           >
-            <span>Kelola</span>
+            <span>{t.manage}</span>
             <ChevronRight className="w-3 h-3" />
           </span>
         </div>
@@ -271,7 +276,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
                   <span className="px-2 py-0.5 bg-zinc-800 text-[9px] font-semibold rounded text-zinc-300 border border-zinc-700/50">
-                    {acc.type === 'EMERGENCY' ? 'Darurat' : acc.type === 'INVESTMENT' ? 'Investasi' : 'Utama'}
+                    {acc.type === 'EMERGENCY' ? t.emergency : acc.type === 'INVESTMENT' ? t.investment : t.main}
                   </span>
                   <span className="text-[9px] text-zinc-400 font-mono">{acc.accountNumber || '5270••8812'}</span>
                 </div>
@@ -284,7 +289,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                 </div>
 
                 <div className="pt-2 border-t border-zinc-800 flex items-center justify-between text-[9px]">
-                  <span className="text-zinc-400">Bunga Tahunan</span>
+                  <span className="text-zinc-400">{t.annualInterest}</span>
                   <span className="text-emerald-400 font-bold">{acc.interestRate}% p.a.</span>
                 </div>
               </div>
@@ -297,7 +302,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
       <div className="p-4 rounded-2xl fintech-card space-y-2">
         <div className="flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block">Pertumbuhan Net Worth</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block">{t.netWorthGrowth}</span>
             <div className="text-xs font-bold mt-0.5 flex items-center gap-1.5">
               <span className="text-white font-mono">{formatCurrency(totalBalance, currency)}</span>
               <span className="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
@@ -311,7 +316,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
             className="px-2.5 py-1 text-indigo-400 bg-indigo-500/10 hover:bg-indigo-500/20 rounded-lg text-[10px] font-bold transition-colors flex items-center gap-1 border border-indigo-500/20"
           >
             <TrendingUp className="w-3 h-3" />
-            <span>Detail</span>
+            <span>{t.detail}</span>
           </button>
         </div>
 
@@ -342,13 +347,13 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
       <div className="space-y-2">
         <div className="flex items-center justify-between px-1">
           <h3 className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">
-            Transaksi Terakhir
+            {t.recentTransactions}
           </h3>
           <span
             className="text-[10px] font-semibold text-indigo-400 flex items-center gap-0.5 cursor-pointer hover:text-indigo-300"
             onClick={() => onNavigate('transactions')}
           >
-            <span>Lihat Semua</span>
+            <span>{t.viewAll}</span>
             <ChevronRight className="w-3 h-3" />
           </span>
         </div>
@@ -378,7 +383,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                 <span className={`text-xs font-bold block ${tx.type === 'INCOME' ? 'text-emerald-400' : 'text-rose-400'}`}>
                   {tx.type === 'INCOME' ? '+' : '-'}{formatCurrency(tx.amount, currency)}
                 </span>
-                <span className="text-[9px] text-zinc-400 font-medium block">{tx.notes || 'Arus Kas'}</span>
+                <span className="text-[9px] text-zinc-400 font-medium block">{tx.notes || t.cashFlow}</span>
               </div>
             </div>
           ))}

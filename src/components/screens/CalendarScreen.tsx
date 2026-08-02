@@ -3,19 +3,24 @@ import { motion } from 'motion/react';
 import { Transaction } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, ArrowUpRight, ArrowDownRight, Repeat } from 'lucide-react';
+import { translateText } from '../../utils/translations';
 
 interface CalendarScreenProps {
   transactions: Transaction[];
   currency: 'IDR' | 'USD' | 'EUR';
   isDark?: boolean;
+  language?: string;
 }
 
 export const CalendarScreen: React.FC<CalendarScreenProps> = ({
   transactions,
   currency,
-  isDark = false
+  isDark = false,
+  language = 'ID'
 }) => {
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().slice(0, 10));
+
+  const t = (text: string) => translateText(text, language);
 
   const validTx = transactions.filter(t => !t.isDeleted);
 
@@ -44,8 +49,8 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className={`text-xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>Kalender Keuangan</h2>
-          <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Pantau catatan transaksi berdasarkan tanggal</p>
+          <h2 className={`text-xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>{t("Kalender Keuangan")}</h2>
+          <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{t("Pantau catatan transaksi berdasarkan tanggal")}</p>
         </div>
       </div>
 
@@ -56,7 +61,7 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({
         <div className="flex items-center justify-between">
           <h3 className={`text-sm font-extrabold flex items-center gap-1.5 ${isDark ? 'text-white' : 'text-slate-900'}`}>
             <CalendarIcon className="w-4 h-4 text-[#6C4CF5]" />
-            <span>Agustus 2026</span>
+            <span>{t("Agustus 2026")}</span>
           </h3>
           <div className="flex space-x-1">
             <button className={`p-1.5 rounded-xl ${isDark ? 'hover:bg-slate-800 text-slate-300' : 'hover:bg-slate-100 text-slate-600'}`}>
@@ -70,13 +75,13 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({
 
         {/* Days of week header */}
         <div className={`grid grid-cols-7 text-center text-[10px] font-bold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-          <span>Min</span>
-          <span>Sen</span>
-          <span>Sel</span>
-          <span>Rab</span>
-          <span>Kam</span>
-          <span>Jum</span>
-          <span>Sab</span>
+          <span>{t("Min")}</span>
+          <span>{t("Sen")}</span>
+          <span>{t("Sel")}</span>
+          <span>{t("Rab")}</span>
+          <span>{t("Kam")}</span>
+          <span>{t("Jum")}</span>
+          <span>{t("Sab")}</span>
         </div>
 
         {/* Calendar Days Grid */}
@@ -109,7 +114,7 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({
       }`}>
         <div className="flex items-center justify-between">
           <h3 className={`text-xs font-extrabold uppercase tracking-wider ${isDark ? 'text-slate-300' : 'text-slate-900'}`}>
-            Detail Tanggal {selectedDate}
+            {t("Detail Tanggal")} {selectedDate}
           </h3>
 
           <div className="flex space-x-2 text-[10px] font-bold">
@@ -120,7 +125,7 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({
 
         <div className={`divide-y ${isDark ? 'divide-slate-800' : 'divide-slate-100'}`}>
           {dayTx.length === 0 ? (
-            <p className={`text-xs py-4 text-center ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Tidak ada transaksi pada tanggal ini.</p>
+            <p className={`text-xs py-4 text-center ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{t("Tidak ada transaksi pada tanggal ini.")}</p>
           ) : (
             dayTx.map(tx => (
               <div key={tx.id} className="py-2.5 flex items-center justify-between">

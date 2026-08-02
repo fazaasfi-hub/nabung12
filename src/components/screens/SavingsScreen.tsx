@@ -3,11 +3,13 @@ import { motion } from 'motion/react';
 import { SavingsAccount } from '../../types';
 import { formatCurrency, formatNumberInput, parseNumberInput } from '../../utils/formatters';
 import { Wallet, Plus, Trash2, Repeat, ShieldCheck, Palmtree, Laptop, Sparkles, ArrowRightLeft } from 'lucide-react';
+import { translateText } from '../../utils/translations';
 
 interface SavingsScreenProps {
   accounts: SavingsAccount[];
   currency: 'IDR' | 'USD' | 'EUR';
   isDark?: boolean;
+  language?: string;
   onAddAccount: (acc: SavingsAccount) => void;
   onDeleteAccount: (id: string) => void;
   onOpenTransfer: () => void;
@@ -17,6 +19,7 @@ export const SavingsScreen: React.FC<SavingsScreenProps> = ({
   accounts,
   currency,
   isDark = false,
+  language = 'ID',
   onAddAccount,
   onDeleteAccount,
   onOpenTransfer
@@ -27,6 +30,8 @@ export const SavingsScreen: React.FC<SavingsScreenProps> = ({
   const [targetAmount, setTargetAmount] = useState('');
   const [color, setColor] = useState('#6C4CF5');
   const [notes, setNotes] = useState('');
+
+  const t = (text: string) => translateText(text, language);
 
   const totalBalance = accounts.reduce((acc, a) => acc + a.balance, 0);
 
@@ -73,8 +78,8 @@ export const SavingsScreen: React.FC<SavingsScreenProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className={`text-xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>Rekening & Tabungan</h2>
-          <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Kelola sub-rekening & alokasi dana khusus</p>
+          <h2 className={`text-xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>{t("Rekening & Tabungan")}</h2>
+          <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{t("Kelola sub-rekening & alokasi dana khusus")}</p>
         </div>
 
         <button
@@ -82,14 +87,14 @@ export const SavingsScreen: React.FC<SavingsScreenProps> = ({
           className="px-3.5 py-1.5 bg-[#6C4CF5] hover:bg-indigo-700 text-white text-xs font-bold rounded-2xl shadow-md transition-all inline-flex items-center space-x-1 shrink-0"
         >
           <Plus className="w-4 h-4" />
-          <span>Tambah Rekening</span>
+          <span>{t("Tambah Rekening")}</span>
         </button>
       </div>
 
       {/* Total Balance Header Banner */}
       <div className="p-5 bg-gradient-to-r from-[#0B1220] via-[#1E1B4B] to-[#6C4CF5] text-white rounded-[24px] shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border border-white/10 overflow-hidden">
         <div className="min-w-0 flex-1">
-          <span className="text-[10px] uppercase tracking-wider font-bold text-indigo-200 block truncate">Total Kas Terakumulasi</span>
+          <span className="text-[10px] uppercase tracking-wider font-bold text-indigo-200 block truncate">{t("Total Kas Terakumulasi")}</span>
           <div className="text-xl sm:text-2xl font-black text-white mt-0.5 truncate font-mono">
             {formatCurrency(totalBalance, currency)}
           </div>
@@ -100,7 +105,7 @@ export const SavingsScreen: React.FC<SavingsScreenProps> = ({
           className="px-3.5 py-2 bg-white/10 hover:bg-white/20 text-indigo-200 text-xs font-bold rounded-xl border border-white/15 flex items-center gap-1.5 transition-colors shrink-0"
         >
           <ArrowRightLeft className="w-3.5 h-3.5" />
-          <span>Transfer</span>
+          <span>{t("Transfer")}</span>
         </button>
       </div>
 
@@ -109,15 +114,15 @@ export const SavingsScreen: React.FC<SavingsScreenProps> = ({
         <form onSubmit={handleSubmit} className={`p-5 border rounded-[24px] shadow-lg space-y-4 ${
           isDark ? 'bg-[#1E293B] border-slate-800 text-white' : 'bg-white border-slate-200/80 text-slate-900'
         }`}>
-          <h3 className={`text-sm font-extrabold ${isDark ? 'text-white' : 'text-slate-900'}`}>Buat Rekening Tabungan Baru</h3>
+          <h3 className={`text-sm font-extrabold ${isDark ? 'text-white' : 'text-slate-900'}`}>{t("Buat Rekening Tabungan Baru")}</h3>
 
           <div>
-            <label className={`block text-xs font-semibold mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>Nama Rekening</label>
+            <label className={`block text-xs font-semibold mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{t("Nama Rekening")}</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Contoh: Dana Darurat, Tabungan Rumah"
+              placeholder={t("Contoh: Dana Darurat, Tabungan Rumah")}
               className={`w-full px-3.5 py-2.5 border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#6C4CF5] ${
                 isDark ? 'bg-slate-800 border-slate-700 text-white placeholder-slate-500' : 'bg-white border-slate-300 text-slate-900'
               }`}
@@ -127,7 +132,7 @@ export const SavingsScreen: React.FC<SavingsScreenProps> = ({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={`block text-xs font-semibold mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>Saldo Awal (Rp)</label>
+              <label className={`block text-xs font-semibold mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{t("Saldo Awal (Rp)")}</label>
               <input
                 type="text"
                 value={formatNumberInput(balance)}
@@ -139,7 +144,7 @@ export const SavingsScreen: React.FC<SavingsScreenProps> = ({
               />
             </div>
             <div>
-              <label className={`block text-xs font-semibold mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>Target Nominal (Rp)</label>
+              <label className={`block text-xs font-semibold mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{t("Target Nominal (Rp)")}</label>
               <input
                 type="text"
                 value={formatNumberInput(targetAmount)}
@@ -153,7 +158,7 @@ export const SavingsScreen: React.FC<SavingsScreenProps> = ({
           </div>
 
           <div>
-            <label className={`block text-xs font-semibold mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>Pilih Warna Rekening</label>
+            <label className={`block text-xs font-semibold mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{t("Pilih Warna Rekening")}</label>
             <div className="flex space-x-2">
               {['#6C4CF5', '#10B981', '#F59E0B', '#EC4899', '#3B82F6', '#8B5CF6'].map(c => (
                 <button
@@ -173,13 +178,13 @@ export const SavingsScreen: React.FC<SavingsScreenProps> = ({
               onClick={() => setIsAdding(false)}
               className={`px-3.5 py-2 text-xs font-semibold ${isDark ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'}`}
             >
-              Batal
+              {t("Batal")}
             </button>
             <button
               type="submit"
               className="px-4 py-2 bg-[#6C4CF5] text-white text-xs font-bold rounded-xl hover:bg-indigo-700 shadow-md"
             >
-              Simpan Rekening
+              {t("Simpan Rekening")}
             </button>
           </div>
         </form>
@@ -216,7 +221,7 @@ export const SavingsScreen: React.FC<SavingsScreenProps> = ({
                   </div>
                   <div>
                     <h3 className={`text-sm font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{acc.name}</h3>
-                    <p className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{acc.notes || 'Rekening aktif'}</p>
+                    <p className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{acc.notes || t('Rekening aktif')}</p>
                   </div>
                 </div>
 
@@ -226,7 +231,7 @@ export const SavingsScreen: React.FC<SavingsScreenProps> = ({
                     className={`p-1.5 rounded-xl transition-colors ${
                       isDark ? 'text-slate-500 hover:text-rose-400 hover:bg-rose-500/10' : 'text-slate-300 hover:text-rose-500 hover:bg-rose-50'
                     }`}
-                    title="Hapus Rekening"
+                    title={t("Hapus Rekening")}
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -234,7 +239,7 @@ export const SavingsScreen: React.FC<SavingsScreenProps> = ({
               </div>
 
               <div className="pl-2 pt-1">
-                <span className={`text-[10px] uppercase font-bold tracking-wider block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Saldo Rekening</span>
+                <span className={`text-[10px] uppercase font-bold tracking-wider block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{t("Saldo Rekening")}</span>
                 <div className={`text-xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>
                   {formatCurrency(acc.balance, currency)}
                 </div>
